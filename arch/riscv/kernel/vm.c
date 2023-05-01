@@ -29,13 +29,19 @@ void setup_vm(void) {
   对应的是虚拟地址，而在本函数中你需要将其转换为对应的物理地址使用
   */
   // convert virtual address to physical address
-  unsigned long early_pgtbl_pa = (uint64)early_pgtbl - PA2VA_OFFSET;
+  uint64* early_pgtbl_pa = early_pgtbl - PA2VA_OFFSET;
+  memset(early_pgtbl_pa, 0x0, PGSIZE);
+  uint64 ppn_base = PHY_START >> 12;
+  ppn_base = ppn_base << 10;
   for (size_t i = 0; i < 512; ++i) {
     // set PPN
-    (&early_pgtbl_pa)[i] = PHY_START + (i << 30);
+    // i should first << 30 bits since linear mapping, then >> 12 bits since page number, then << 10 bits since PPN, so << 28 bits in total
+    uint64 ppn_offset = i << 28;
+    early_pgtbl_pa[i] = ppn_base + ppn_offset;
     // set V, R, W, X bit to 1
-    (&early_pgtbl_pa)[i] += (1) | (1 << 1) | (1 << 2) | (1 << 3);
+    // ((uint64*)early_pgtbl_pa)[i] += 0xf;
   }
+  printk("setup_vm finished!\n");
   return;
 }
 
