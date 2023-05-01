@@ -11,6 +11,7 @@ _start:
     call relocate
     
     # ...
+    # call setup_vm_final
 
     j start_kernel
 
