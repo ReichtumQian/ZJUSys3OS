@@ -1,0 +1,16 @@
+1. run Qemu in debug mode
+$ qemu-system-riscv64 -nographic -machine virt -kernel path/to/linux/arch/riscv/boot/Image \
+    -device virtio-blk-device,drive=hd0 -append "root=/dev/vda ro console=ttyS0" \
+    -bios fw_jump.bin -drive file=rootfs.img,format=raw,id=hd0 -S -s
+
+2. run gdb
+$ gdb-multiarch path/to/linux/vmlinux
+(gdb) target remote localhost:1234   # 连接 qemu
+(gdb) b start_kernel        # 设置断点
+(gdb) continue              # 继续执行
+(gdb) quit                  # 退出 gdb
+
+
+3. frequently used symbol
+
+_start: 0x80200000
