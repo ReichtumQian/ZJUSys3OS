@@ -80,11 +80,30 @@ void setup_vm_final(void) {
                  _sdata - _srodata, PTE_R | PTE_V);
 
   // mapping other memory -|W|R|V
-  create_mapping(swapper_pg_dir, _sdata, _sdata - PA2VA_OFFSET, VM_END - _sdata,
-                 PTE_R | PTE_W | PTE_V);
+  create_mapping(swapper_pg_dir, _sdata, _sdata - PA2VA_OFFSET,
+                 VM_START + PHY_SIZE - _sdata, PTE_R | PTE_W | PTE_V);
 
   // set satp with swapper_pg_dir
-  asm volatile("csrw satp, %0" : : "r"(swapper_pg_dir) : "memory");
+  // uint64 swp_pa = (uint64)swapper_pg_dir - PA2VA_OFFSET;
+  // asm volatile(
+  //   "mv t0, %0\n"
+  //   "li t1, 1\n"
+  //   "slli t1, t1, 63\n"
+  //   "or t0, t0, t1\n"
+  //   "csrw satp, t0\n"
+  //   :
+  //   : "r"(swp_pa)
+  //   : "memory"
+  // );
+  unsigned long swp = (unsigned long)swapper_pg_dir - PA2VA_OFFSET;
+  asm volatile("mv t0, %[addr]\n"
+               "li t1, 0x8000000000000000\n"
+               "srl t0, t0, 12\n"
+               "add t0, t0, t1\n"
+               "csrrw x0, satp, t0\n"
+               :
+               : [addr] "r"(swp)
+               : "memory");
 
   // flush TLB
   asm volatile("sfence.vma zero, zero");
@@ -128,4 +147,5 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
       pgtbl[vpn[i]] = (ppn[i] << 10) | perm;
     }
   }
+
 }
