@@ -36,6 +36,8 @@ void setup_vm(void) {
   // ppn = page_number << 10 = 0x2000 0000
   // table entry = ppn | 0xf = 0x2000 0000 | 0xf = 0x2000 000f
   // -------------------------------------------------
+  early_pgtbl[2] = 0x000000002000000F;
+  early_pgtbl[384] = 0x000000002000000F;
 
   // definition for perm
   // const uint64 PTE_V = 1UL << 0;
@@ -50,6 +52,7 @@ void setup_vm(void) {
 
   // index = (VM_START >> 30) & 0x1ff;
   // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
+
 
 
   printk("setup_vm finished!\n");
