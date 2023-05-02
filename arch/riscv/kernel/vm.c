@@ -77,33 +77,25 @@ void setup_vm_final(void) {
 
   // mapping kernel rodata -|-|R|V
   create_mapping(swapper_pg_dir, _srodata, _srodata - PA2VA_OFFSET,
-                 _sdata - _srodata, PTE_R | PTE_V);
+                 0x1000, PTE_R | PTE_V);
 
   // mapping other memory -|W|R|V
   create_mapping(swapper_pg_dir, _sdata, _sdata - PA2VA_OFFSET,
-                 VM_START + PHY_SIZE - _sdata, PTE_R | PTE_W | PTE_V);
+                 PHY_SIZE-PGROUNDUP(0x203000), PTE_R | PTE_W | PTE_V);
 
   // set satp with swapper_pg_dir
-  // uint64 swp_pa = (uint64)swapper_pg_dir - PA2VA_OFFSET;
-  // asm volatile(
-  //   "mv t0, %0\n"
-  //   "li t1, 1\n"
-  //   "slli t1, t1, 63\n"
-  //   "or t0, t0, t1\n"
-  //   "csrw satp, t0\n"
-  //   :
-  //   : "r"(swp_pa)
-  //   : "memory"
-  // );
-  unsigned long swp = (unsigned long)swapper_pg_dir - PA2VA_OFFSET;
-  asm volatile("mv t0, %[addr]\n"
-               "li t1, 0x8000000000000000\n"
-               "srl t0, t0, 12\n"
-               "add t0, t0, t1\n"
-               "csrrw x0, satp, t0\n"
-               :
-               : [addr] "r"(swp)
-               : "memory");
+  uint64 swp_pa = ((uint64)swapper_pg_dir) - PA2VA_OFFSET;
+  uint64 swp_ppn = swp_pa >> 12;
+  asm volatile(
+    "mv t0, %0\n"
+    "li t1, 1\n"
+    "slli t1, t1, 63\n"
+    "or t0, t0, t1\n"
+    "csrw satp, t0\n"
+    :
+    : "r"(swp_ppn)
+    : "memory"
+  );
 
   // flush TLB
   asm volatile("sfence.vma zero, zero");
@@ -129,6 +121,7 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
   uint64 ppn[3]; // ppn for three levels
   uint64 size = sz;
   uint64* pgtbl2, *pgtbl3;
+  uint64 value; // for debug
   while(size < INT_MAX && size > 0){
     vpn[0] = (va >> 30) & 0x1ff;  // in virtual address it means vpn[2], but for convenience, we use vpn[0]
     vpn[1] = (va >> 21) & 0x1ff;
@@ -141,11 +134,13 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
           pgtbl2 = (uint64*)kalloc();
           memset(pgtbl2, 0x0, PGSIZE);
           uint64 pgtbl2_ppn = ((uint64)pgtbl2 - PA2VA_OFFSET) >> 12;
-          pgtbl[vpn[i]] = ((pgtbl2_ppn) << 10) | PTE_V;
+          value = ((pgtbl2_ppn) << 10) | PTE_V;
+          pgtbl[vpn[i]] = value;
         }
         else{
           ppn[i] = pgtbl[vpn[i]] >> 10;
-          pgtbl2 = (uint64 *)((ppn[i] << 12) + PA2VA_OFFSET);
+          value = ((ppn[i] << 12) + PA2VA_OFFSET);
+          pgtbl2 = (uint64 *)value;
         }
       }
       //------------------ second level -------------------
@@ -155,17 +150,20 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
           pgtbl3 = (uint64*)kalloc();
           memset(pgtbl3, 0x0, PGSIZE);
           uint64 pgtbl3_ppn = ((uint64)pgtbl3 - PA2VA_OFFSET) >> 12;
-          pgtbl2[vpn[i]] = ((pgtbl3_ppn) << 10) | PTE_V;
+          value = ((pgtbl3_ppn) << 10) | PTE_V;
+          pgtbl2[vpn[i]] = value;
         }
         else{
           ppn[i] = pgtbl2[vpn[i]] >> 10;
-          pgtbl3 = (uint64 *)((ppn[i] << 12) + PA2VA_OFFSET);
+          value = ((ppn[i] << 12) + PA2VA_OFFSET);
+          pgtbl3 = (uint64 *)value;
         }
       }
       // ----------------- third level -------------------
       else {
         ppn[i] = pa >> 12;
-        pgtbl3[vpn[i]] = (ppn[i] << 10) | perm;
+        value = (ppn[i] << 10) | perm;
+        pgtbl3[vpn[i]] = value;
       }
     }
     va += PGSIZE;
