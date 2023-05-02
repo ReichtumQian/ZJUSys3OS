@@ -124,28 +124,53 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
   可以使用 V bit 来判断页表项是否存在
   */
   const uint64 PTE_V = 1UL << 0;
+  const uint64 INT_MAX = 0x8000000000000000;
   uint64 vpn[3];
-  vpn[2] = (va >> 30) & 0x1ff;
-  vpn[1] = (va >> 21) & 0x1ff;
-  vpn[0] = (va >> 12) & 0x1ff;
   uint64 ppn[3]; // ppn for three levels
-  for (int i = 0; i < 3; ++i) {
-    //------------------ first and second level -------------------
-    if (i == 0 || i == 1) {
-      // if not exist
-      if ((pgtbl[vpn[i]] & PTE_V) == 0) {
-        uint64 new_pgtbl = kalloc();
-        uint64 new_pgtbl_ppn = new_pgtbl >> 12;
-        pgtbl[vpn[i]] = (new_pgtbl_ppn << 10) | perm;
+  uint64 size = sz;
+  uint64* pgtbl2, *pgtbl3;
+  while(size < INT_MAX && size > 0){
+    vpn[0] = (va >> 30) & 0x1ff;  // in virtual address it means vpn[2], but for convenience, we use vpn[0]
+    vpn[1] = (va >> 21) & 0x1ff;
+    vpn[2] = (va >> 12) & 0x1ff;
+    for (int i = 0; i < 3; ++i) {
+      //------------------ first  level -------------------
+      if (i == 0) {
+        // if not exist
+        if ((pgtbl[vpn[i]] & PTE_V) == 0) {
+          pgtbl2 = (uint64*)kalloc();
+          memset(pgtbl2, 0x0, PGSIZE);
+          uint64 pgtbl2_ppn = (uint64)(pgtbl2 - PA2VA_OFFSET) >> 12;
+          pgtbl[vpn[i]] = ((pgtbl2_ppn) << 10) | PTE_V;
+        }
+        else{
+          ppn[i] = pgtbl[vpn[i]] >> 10;
+          pgtbl2 = (uint64 *)((ppn[i] << 12) + PA2VA_OFFSET);
+        }
       }
-      ppn[i] = pgtbl[vpn[i]] >> 10;
-      pgtbl = (uint64 *)(ppn[i] << 12);
+      //------------------ second level -------------------
+      else if (i == 1) {
+        // if not exist
+        if ((pgtbl2[vpn[i]] & PTE_V) == 0) {
+          pgtbl3 = (uint64*)kalloc();
+          memset(pgtbl3, 0x0, PGSIZE);
+          uint64 pgtbl3_ppn = (uint64)(pgtbl3 - PA2VA_OFFSET) >> 12;
+          pgtbl2[vpn[i]] = ((pgtbl3_ppn) << 10) | PTE_V;
+        }
+        else{
+          ppn[i] = pgtbl2[vpn[i]] >> 10;
+          pgtbl3 = (uint64 *)((ppn[i] << 12) + PA2VA_OFFSET);
+        }
+      }
+      // ----------------- third level -------------------
+      else {
+        ppn[i] = pa >> 12;
+        pgtbl3[vpn[i]] = (ppn[i] << 10) | perm;
+      }
     }
-    // ----------------- third level -------------------
-    else {
-      ppn[i] = pa >> 12;
-      pgtbl[vpn[i]] = (ppn[i] << 10) | perm;
-    }
+    va += PGSIZE;
+    pa += PGSIZE;
+    size -= PGSIZE;
   }
 
 }
