@@ -20,7 +20,6 @@
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
-      "stopAtConnect": true,
       "setupCommands": [
           {
               "description": "为 gdb 启用整齐打印",

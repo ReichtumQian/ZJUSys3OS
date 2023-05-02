@@ -73,7 +73,7 @@ void setup_vm_final(void) {
 
   // mapping kernel text X|-|R|V
   create_mapping(swapper_pg_dir, _stext, _stext - PA2VA_OFFSET,
-                 _srodata - _stext, PTE_R | PTE_X | PTE_V);
+                 0x2000, PTE_R | PTE_X | PTE_V);
 
   // mapping kernel rodata -|-|R|V
   create_mapping(swapper_pg_dir, _srodata, _srodata - PA2VA_OFFSET,
@@ -140,7 +140,7 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
         if ((pgtbl[vpn[i]] & PTE_V) == 0) {
           pgtbl2 = (uint64*)kalloc();
           memset(pgtbl2, 0x0, PGSIZE);
-          uint64 pgtbl2_ppn = (uint64)(pgtbl2 - PA2VA_OFFSET) >> 12;
+          uint64 pgtbl2_ppn = ((uint64)pgtbl2 - PA2VA_OFFSET) >> 12;
           pgtbl[vpn[i]] = ((pgtbl2_ppn) << 10) | PTE_V;
         }
         else{
@@ -154,7 +154,7 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
         if ((pgtbl2[vpn[i]] & PTE_V) == 0) {
           pgtbl3 = (uint64*)kalloc();
           memset(pgtbl3, 0x0, PGSIZE);
-          uint64 pgtbl3_ppn = (uint64)(pgtbl3 - PA2VA_OFFSET) >> 12;
+          uint64 pgtbl3_ppn = ((uint64)pgtbl3 - PA2VA_OFFSET) >> 12;
           pgtbl2[vpn[i]] = ((pgtbl3_ppn) << 10) | PTE_V;
         }
         else{
