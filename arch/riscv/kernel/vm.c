@@ -35,25 +35,23 @@ void setup_vm(void) {
   // page_number = pa >> 12 = 0x80000
   // ppn = page_number << 10 = 0x2000 0000
   // table entry = ppn | 0xf = 0x2000 0000 | 0xf = 0x2000 000f
+  // early_pgtbl[384] = 0x000000002000000F;
+  // early_pgtbl[2] = 0x000000002000000F;
   // -------------------------------------------------
-  early_pgtbl[2] = 0x000000002000000F;
-  early_pgtbl[384] = 0x000000002000000F;
 
   // definition for perm
-  // const uint64 PTE_V = 1UL << 0;
-  // const uint64 PTE_R = 1UL << 1;
-  // const uint64 PTE_W = 1UL << 2;
-  // const uint64 PTE_X = 1UL << 3;
+  const uint64 PTE_V = 1UL << 0;
+  const uint64 PTE_R = 1UL << 1;
+  const uint64 PTE_W = 1UL << 2;
+  const uint64 PTE_X = 1UL << 3;
 
-  // uint64 index = (PHY_START >> 30) & 0x1ff; // index for early_pgtbl
-  // uint64 pageNumber = PHY_START >> 12;
-  // uint64 ppn = pageNumber << 10;
-  // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
+  uint64 index = (PHY_START >> 30) & 0x1ff; // index for early_pgtbl
+  uint64 pageNumber = PHY_START >> 12;
+  uint64 ppn = pageNumber << 10;
+  early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
 
-  // index = (VM_START >> 30) & 0x1ff;
-  // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
-
-
+  index = (VM_START >> 30) & 0x1ff;
+  early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
 
   printk("setup_vm finished!\n");
   return;
