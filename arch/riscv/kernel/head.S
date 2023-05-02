@@ -56,7 +56,7 @@ relocate:
   li t3, 1
   slli t3, t3, 63 # set mode to Sv39
   la t0, early_pgtbl
-  sub t0, t0, t1
+  # sub t0, t0, t1
   srli t0, t0, 12
   add t0, t0, t3
   csrw satp, t0

@@ -28,19 +28,30 @@ void setup_vm(void) {
   4. early_pgtbl
   对应的是虚拟地址，而在本函数中你需要将其转换为对应的物理地址使用
   */
-  // convert virtual address to physical address
-  uint64* early_pgtbl_pa = early_pgtbl - PA2VA_OFFSET;
-  memset(early_pgtbl_pa, 0x0, PGSIZE);
-  uint64 ppn_base = PHY_START >> 12;
-  ppn_base = ppn_base << 10;
-  for (size_t i = 0; i < 512; ++i) {
-    // set PPN
-    // i should first << 30 bits since linear mapping, then >> 12 bits since page number, then << 10 bits since PPN, so << 28 bits in total
-    uint64 ppn_offset = i << 28;
-    early_pgtbl_pa[i] = ppn_base + ppn_offset;
-    // set V, R, W, X bit to 1
-    // ((uint64*)early_pgtbl_pa)[i] += 0xf;
-  }
+  // ------------------ calculation ------------------
+  // va = 0xffffffe000000000
+  // index bit = 1 1000 0000b = 384d
+  // pa = 0x80000000
+  // page_number = pa >> 12 = 0x80000
+  // ppn = page_number << 10 = 0x2000 0000
+  // table entry = ppn | 0xf = 0x2000 0000 | 0xf = 0x2000 000f
+  // -------------------------------------------------
+
+  // definition for perm
+  // const uint64 PTE_V = 1UL << 0;
+  // const uint64 PTE_R = 1UL << 1;
+  // const uint64 PTE_W = 1UL << 2;
+  // const uint64 PTE_X = 1UL << 3;
+
+  // uint64 index = (PHY_START >> 30) & 0x1ff; // index for early_pgtbl
+  // uint64 pageNumber = PHY_START >> 12;
+  // uint64 ppn = pageNumber << 10;
+  // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
+
+  // index = (VM_START >> 30) & 0x1ff;
+  // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
+
+
   printk("setup_vm finished!\n");
   return;
 }
