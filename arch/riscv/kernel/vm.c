@@ -1,9 +1,11 @@
 // arch/riscv/kernel/vm.c
 
-extern unsigned long _stext;
-extern unsigned long _srodata;
-extern unsigned long _sdata;
-extern unsigned long _sbsss;
+// extern unsigned long _stext is not correct!! so I change it to extern unsigned long _stext[]
+// extern unsigned long _stext;
+extern unsigned long _stext[];
+extern unsigned long _srodata[];
+extern unsigned long _sdata[];
+extern unsigned long _sbss[];
 
 #include "vm.h"
 #include "defs.h"
@@ -72,15 +74,15 @@ void setup_vm_final(void) {
   // No OpenSBI mapping required
 
   // mapping kernel text X|-|R|V
-  create_mapping(swapper_pg_dir, _stext, _stext - PA2VA_OFFSET,
+  create_mapping(swapper_pg_dir, (uint64)_stext, (uint64)_stext - PA2VA_OFFSET,
                  0x2000, PTE_R | PTE_X | PTE_V);
 
   // mapping kernel rodata -|-|R|V
-  create_mapping(swapper_pg_dir, _srodata, _srodata - PA2VA_OFFSET,
+  create_mapping(swapper_pg_dir, (uint64)_srodata, (uint64)_srodata - PA2VA_OFFSET,
                  0x1000, PTE_R | PTE_V);
 
   // mapping other memory -|W|R|V
-  create_mapping(swapper_pg_dir, _sdata, _sdata - PA2VA_OFFSET,
+  create_mapping(swapper_pg_dir, (uint64)_sdata, (uint64)_sdata - PA2VA_OFFSET,
                  PHY_SIZE-PGROUNDUP(0x203000), PTE_R | PTE_W | PTE_V);
 
   // set satp with swapper_pg_dir
