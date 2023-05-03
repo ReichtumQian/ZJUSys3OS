@@ -84,7 +84,7 @@ void setup_vm_final(void) {
 
   // mapping other memory -|W|R|V
   create_mapping(swapper_pg_dir, (uint64)_sdata, (uint64)_sdata - PA2VA_OFFSET,
-                 PHY_SIZE-PGROUNDUP(0x203000), PTE_R | PTE_W | PTE_V);
+                 PHY_SIZE-(0x203000), PTE_R | PTE_W | PTE_V);
 
   // set satp with swapper_pg_dir
   uint64 swp_pa = ((uint64)swapper_pg_dir) - PA2VA_OFFSET;
