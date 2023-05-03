@@ -67,7 +67,7 @@ void dummy() {
         last_last_counter = last_counter;
         last_counter = current->counter;
         auto_inc_local_var = (auto_inc_local_var + 1) % MOD;
-        printk("[PID = %d] is running. auto_inc_local_var = %d\n", current->pid, auto_inc_local_var); 
+        printk("[PID = %d] is running. thread space begin at %lx\n", current->pid, current); 
     } else if((last_last_counter == 0 || last_last_counter == -1) && last_counter == 1) { // counter恒为1的情况
         // 这里比较 tricky，不要求理解。
         last_counter = 0; 
