@@ -47,13 +47,14 @@ void setup_vm(void) {
   const uint64 PTE_W = 1UL << 2;
   const uint64 PTE_X = 1UL << 3;
 
-  uint64 index = (PHY_START >> 30) & 0x1ff; // index for early_pgtbl
   uint64 pageNumber = PHY_START >> 12;
   uint64 ppn = pageNumber << 10;
-  // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;  // just for debug convenience.
 
-  index = (VM_START >> 30) & 0x1ff;
+  uint64 index = (VM_START >> 30) & 0x1ff; // index for early_pgtbl
   early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
+
+  // index = (PHY_START >> 30) & 0x1ff;
+  // early_pgtbl[index] = ppn | PTE_V | PTE_R | PTE_W | PTE_X;
 
   printk("setup_vm finished!\n");
   return;
