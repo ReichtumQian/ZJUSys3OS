@@ -17,27 +17,27 @@ _start:
   //===================================
   // lab5 ： 开启中断
   // set stvec = _traps
-  # la t0, _traps
-  # csrw stvec, t0
+  la t0, _traps
+  csrw stvec, t0
 
   // set sstatus[SIE] = 1
-  # li t0, 0x2
-  # csrs sstatus, t0
+  li t0, 0x2
+  csrs sstatus, t0
 
   // set first time interrupt
-  # li a7, 0x00
-  # li a6, 0
-  # rdtime t0
-  # li t1, 10000000
-  # add t0, t0, t1
-  # mv a0, t0
-  # ecall
+  li a7, 0x00
+  li a6, 0
+  rdtime t0
+  li t1, 10000000
+  add t0, t0, t1
+  mv a0, t0
+  ecall
 
   // set sie[STIE] = 1
-  # csrr t0, sie
-  # li t1, 0x20
-  # or t0, t0, t1
-  # csrw sie, t0
+  csrr t0, sie
+  li t1, 0x20
+  or t0, t0, t1
+  csrw sie, t0
 
   j start_kernel
 
