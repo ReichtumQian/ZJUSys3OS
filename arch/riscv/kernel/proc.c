@@ -47,6 +47,12 @@ void task_init() {
     // 设置 ra 和 sp
     task[i]->thread.ra = (uint64)__dummy;
     task[i]->thread.sp = task_page + PGSIZE;
+    // 设置 sepc 为 USER_START，使得 sret 返回用户态
+    task[i]->thread.sepc = USER_START;
+    // 设置 sstatus 的 SPP = 0 (bit 8), SPIE = 1 (bit 5), SUM = 1 (bit 18), SIE = 0 (bit 1)
+    task[i]->thread.sstatus = (1 << 18) | (1 << 5);
+    // 设置 sscratch 为 USER_END
+    task[i]->thread.sscratch = USER_END;
   }
   task[1] -> priority = 1;
   task[2] -> priority = 4;
