@@ -11,6 +11,8 @@
 #define FIRST_TASK task[0] // 第一个线程
 #define LAST_TASK task[NR_TASKS - 1] // 最后一个线程
 
+typedef unsigned long* pagetable_t;
+
 /* 用于记录 `线程` 的 `内核栈与用户栈指针` */
 /* (lab6中无需考虑，在这里引入是为了之后实验的使用) */
 struct thread_info {
@@ -23,6 +25,7 @@ struct thread_struct {
     uint64 ra;
     uint64 sp;
     uint64 s[12];
+    uint64 sepc, sstatus, sscratch;
 };
 
 /* 线程数据结构 */
@@ -34,6 +37,8 @@ struct task_struct {
     uint64 pid;      // 线程id
 
     struct thread_struct thread;
+
+    pagetable_t pgd;
 };
 
 /* 线程初始化 创建 NR_TASKS 个线程 */ 
