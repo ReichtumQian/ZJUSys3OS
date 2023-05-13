@@ -4,6 +4,7 @@
 #include"rand.h"
 #include"defs.h"
 #include "types.h"
+#include "vm.h"
 
 #define INT_MAX 2147483647
 #define UINT_MAX 4294967295
@@ -49,10 +50,13 @@ void task_init() {
     task[i]->thread.sp = task_page + PGSIZE;
     // 设置 sepc 为 USER_START，使得 sret 返回用户态
     task[i]->thread.sepc = USER_START;
-    // 设置 sstatus 的 SPP = 0 (bit 8), SPIE = 1 (bit 5), SUM = 1 (bit 18), SIE = 0 (bit 1)
+    // 设置 sstatus 的 SPP = 0 (bit 8), SPIE = 1 (bit 5), SUM = 1 (bit 18)
     task[i]->thread.sstatus = (1 << 18) | (1 << 5);
     // 设置 sscratch 为 USER_END
     task[i]->thread.sscratch = USER_END;
+    // 初始化 page table 与设置 pgd
+    uint64* user_stack = (uint64*) kalloc();
+    task[i]->pgd = setupUserPage(user_stack) - PA2VA_OFFSET;
   }
   task[1] -> priority = 1;
   task[2] -> priority = 4;

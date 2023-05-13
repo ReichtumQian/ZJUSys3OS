@@ -6,6 +6,8 @@ extern unsigned long _stext[];
 extern unsigned long _srodata[];
 extern unsigned long _sdata[];
 extern unsigned long _sbss[];
+extern unsigned long uapp_start[];
+extern unsigned long uapp_end[];
 
 #include "vm.h"
 #include "defs.h"
@@ -174,4 +176,21 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
     size -= PGSIZE;
   }
 
+}
+
+uint64* setupUserPage(uint64* user_stack){
+  // definition
+  const uint64 PTE_V = 1UL << 0;
+  const uint64 PTE_R = 1UL << 1;
+  const uint64 PTE_W = 1UL << 2;
+  const uint64 PTE_X = 1UL << 3;
+  const uint64 PTE_U = 1UL << 4;
+  // create user page table
+  uint64* pgtbl = (uint64*)kalloc();
+  // 设置 uapp 的页表，U, X, R, V = 1
+  create_mapping(pgtbl, USER_START, (uint64)uapp_start - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_X | PTE_U| PTE_W);
+  // 设置用户栈的页表，U, R, V = 1
+  create_mapping(pgtbl, USER_END - PGSIZE, (uint64)user_stack - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_U| PTE_W);
+
+  return pgtbl;
 }
