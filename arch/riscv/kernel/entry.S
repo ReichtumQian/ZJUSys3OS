@@ -125,6 +125,21 @@ __switch_to:
   sd s9, 40+88(a0)
   sd s10,40+96(a0)
   sd s11,40+104(a0)
+  csrr t0, sepc
+  sd t0, 40+112(a0)
+  csrr t0, sstatus
+  sd t0, 40+120(a0)
+  csrr t0, sscratch
+  sd t0, 40+128(a0)
+
+  // change page table
+  ld t0, 40+136(a1) // load next process's page table
+  srli t0, t0, 12 // get ppn
+  li t1, 1
+  slli t1, t1, 63 // set sv39 mode
+  add t0, t0, t1
+  csrw satp, t0
+  sfence.vma zero, zero // flush TLB
 
   // restore state from next process
   ld ra, 40+0(a1)
@@ -141,6 +156,12 @@ __switch_to:
   ld s9, 40+88(a1)
   ld s10,40+96(a1)
   ld s11,40+104(a1)
+  ld t0, 40+112(a1)
+  csrw sepc, t0
+  ld t0, 40+120(a1)
+  csrw sstatus, t0
+  ld t0, 40+128(a1)
+  csrw sscratch, t0
 
   jalr x0, ra, 0
   # ret
