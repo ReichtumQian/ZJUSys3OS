@@ -120,7 +120,7 @@ _trap_return:
   .global __dummy
 __dummy:
 // 设置 sepc 为 uapp 的地址
-  la t0, 0
+  li t0, 0
   csrw sepc, t0
 
   // 切换栈
@@ -128,6 +128,7 @@ __dummy:
   csrr t1, sscratch
   mv sp, t1
   csrw sscratch, t0
+
 
   sret
 
