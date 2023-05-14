@@ -187,14 +187,16 @@ uint64* setupUserPage(uint64* user_stack){
   const uint64 PTE_U = 1UL << 4;
   // create user page table
   uint64* pgtbl = (uint64*)kalloc();
+
+  // 复制内核页表
+  for(uint64 i = 0; i < 512; ++i){
+    pgtbl[i] = swapper_pg_dir[i];
+  }
   // 设置 uapp 的页表，U, X, R, V = 1
   create_mapping(pgtbl, USER_START, (uint64)uapp_start - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_X | PTE_U| PTE_W);
   // 设置用户栈的页表，U, R, V = 1
   create_mapping(pgtbl, USER_END - PGSIZE, (uint64)user_stack - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_U| PTE_W);
 
-  for(uint64 i = 0; i < 512; ++i){
-    pgtbl[i] = swapper_pg_dir[i];
-  }
 
   return pgtbl;
 }
