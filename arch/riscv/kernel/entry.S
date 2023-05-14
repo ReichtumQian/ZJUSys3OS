@@ -2,10 +2,9 @@
   .align 2
   .globl _traps 
 _traps:
-
   # -----------
-  # save 32 registers and sepc to stack
-  addi sp, sp, -32*8
+  # save 31 registers, sepc, sstatus to stack
+  addi sp, sp, -33*8
   sd x1, 0(sp)
   sd x2, 1*8(sp)
   sd x3, 2*8(sp)
@@ -39,25 +38,40 @@ _traps:
   sd x31, 30*8(sp)
   csrr t0, sepc
   sd t0, 31*8(sp)
+  csrr t0, sstatus
+  sd t0, 32*8(sp)
 
-  # -----------
+  csrr t0, sscratch
+  beq t0, zero, _call_trap_handler  // if sscratch == 0, then it is a kernel trap
+  // else, it is a user trap, so we need to switch to kernel stack
+  mv t1, sp
+  mv sp, t0
+  csrw sscratch, t1
+
+_call_trap_handler:
   # call trap_handler
   csrr a0, scause
   csrr a1, sepc
+  csrr a2, sscratch
+  addi a2, a2, -8
   call trap_handler
 
-  # -----------
   # do_timer
-  call do_timer
+  # call do_timer
+
+  // judge whether it is a user trap or kernel trap
+  csrr t0, sscratch
+  beq t0, zero, _trap_return  // if sscratch == 0, then it is a kernel trap
+  // else, it is a user trap, so we need to switch to user stack
+  mv t1, sp
+  mv sp, t0
+  csrw sscratch, t1
 
 
 _trap_return:
   # -----------
   # restore sepc and 32 registers (x2(sp) should be restore last) from stack
-  ld t0, 31*8(sp)
-  csrw sepc, t0
   ld x1, 0(sp)
-  ld x2, 1*8(sp)
   ld x3, 2*8(sp)
   ld x8, 3*8(sp)
   ld x5, 4*8(sp)
@@ -87,9 +101,15 @@ _trap_return:
   ld x29, 28*8(sp)
   ld x30, 29*8(sp)
   ld x31, 30*8(sp)
-  addi sp, sp, 32*8
+  ld t0, 31*8(sp)
+  csrw sepc, t0
+  ld t0, 32*8(sp)
+  csrw sstatus, t0
+  // restore x2 at last
+  ld x2, 1*8(sp)
+  addi sp, sp, 33*8
 
-  # -----------
+
   # 4. return from trap
   sret
 
@@ -99,9 +119,15 @@ _trap_return:
 
   .global __dummy
 __dummy:
-// 设置 sepc 为 dummy() 的地址
-  la t0, dummy
+// 设置 sepc 为 uapp 的地址
+  la t0, 0
   csrw sepc, t0
+
+  // 切换栈
+  mv t0, sp
+  csrr t1, sscratch
+  mv sp, t1
+  csrw sscratch, t0
 
   sret
 

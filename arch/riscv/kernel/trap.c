@@ -2,8 +2,11 @@
 #include"clock.h"
 #include"printk.h"
 
-void trap_handler(unsigned long scause, unsigned long sepc) {
-  int tmp = scause;
+struct pt_regs{
+
+};
+
+void trap_handler(unsigned long scause, unsigned long sepc, struct pt_regs *regs) {
   // judge trap type via scause
   unsigned long mask = 1;
   mask = mask << 63;
