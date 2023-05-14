@@ -56,7 +56,8 @@ void task_init() {
     task[i]->thread.sscratch = USER_END;
     // 初始化 page table 与设置 pgd
     uint64* user_stack = (uint64*) kalloc();
-    task[i]->pgd = setupUserPage(user_stack) - PA2VA_OFFSET;
+    uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
+    task[i]->pgd =  (uint64*)user_pgd;
   }
   task[1] -> priority = 1;
   task[2] -> priority = 4;
