@@ -21,8 +21,8 @@ _start:
   csrw stvec, t0
 
   // set sstatus[SIE] = 1
-  li t0, 0x2
-  csrs sstatus, t0
+  # li t0, 0x2
+  # csrs sstatus, t0
 
   // set first time interrupt
   li a7, 0x00

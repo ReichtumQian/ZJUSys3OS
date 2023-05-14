@@ -15,6 +15,7 @@
       "miDebuggerPath": "/usr/bin/gdb-multiarch",
       "miDebuggerServerAddress": "localhost:1234",
       "args": [],
+      "stopAtConnect": true,
       "stopAtEntry": true,
       "cwd": "${fileDirname}",
       "environment": [],

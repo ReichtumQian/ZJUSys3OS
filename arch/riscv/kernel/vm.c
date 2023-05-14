@@ -192,5 +192,9 @@ uint64* setupUserPage(uint64* user_stack){
   // 设置用户栈的页表，U, R, V = 1
   create_mapping(pgtbl, USER_END - PGSIZE, (uint64)user_stack - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_U| PTE_W);
 
+  for(uint64 i = 0; i < 512; ++i){
+    pgtbl[i] = swapper_pg_dir[i];
+  }
+
   return pgtbl;
 }
