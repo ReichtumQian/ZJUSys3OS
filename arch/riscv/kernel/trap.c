@@ -28,10 +28,11 @@ void trap_handler(unsigned long scause, unsigned long sepc,
     }
   } else {
     if (scause == 8) {
-      if (regs->x[17] == SYS_WRITE) {
-        sys_write(regs->x[10], (char *)regs->x[11], regs->x[12]);
-      } else if (regs->x[17] == SYS_GETPID) {
-        regs->x[10] = sys_getpid();
+      // 由于 regs 中没有存 x0，所以获取 x17 其实读取的是 x[17 - 1]
+      if (regs->x[17 - 1] == SYS_WRITE) {
+        sys_write(regs->x[10 - 1], (char *)regs->x[11 - 1], regs->x[12 - 1]);
+      } else if (regs->x[17 - 1] == SYS_GETPID) {
+        regs->x[10 - 1] = sys_getpid();
       }
       regs->sepc += 4;
     }

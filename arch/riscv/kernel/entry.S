@@ -43,7 +43,6 @@ _traps:
 
   // a2 is the bottom of the stack, pass it to trap_handler
   mv a2, sp
-  addi a2, a2, -8
 
   csrr t0, sscratch
   beq t0, zero, _call_trap_handler  // if sscratch == 0, then it is a kernel trap
