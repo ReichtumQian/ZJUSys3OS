@@ -41,6 +41,10 @@ _traps:
   csrr t0, sstatus
   sd t0, 32*8(sp)
 
+  // a2 is the bottom of the stack, pass it to trap_handler
+  mv a2, sp
+  addi a2, a2, -8
+
   csrr t0, sscratch
   beq t0, zero, _call_trap_handler  // if sscratch == 0, then it is a kernel trap
   // else, it is a user trap, so we need to switch to kernel stack
@@ -52,8 +56,6 @@ _call_trap_handler:
   # call trap_handler
   csrr a0, scause
   csrr a1, sepc
-  csrr a2, sscratch
-  addi a2, a2, -8
   call trap_handler
 
   # do_timer
@@ -69,8 +71,15 @@ _call_trap_handler:
 
 
 _trap_return:
-  # -----------
-  # restore sepc and 32 registers (x2(sp) should be restore last) from stack
+
+  // sepc and sstatus should be restored first, otherwise t0 will be overwritten
+  ld t0, 31*8(sp)
+  csrw sepc, t0
+  ld t0, 32*8(sp)
+  csrw sstatus, t0
+
+
+  # restore 31 registers (x2/sp should be restore last) from stack
   ld x1, 0(sp)
   ld x3, 2*8(sp)
   ld x4, 3*8(sp)
@@ -101,10 +110,6 @@ _trap_return:
   ld x29, 28*8(sp)
   ld x30, 29*8(sp)
   ld x31, 30*8(sp)
-  ld t0, 31*8(sp)
-  csrw sepc, t0
-  ld t0, 32*8(sp)
-  csrw sstatus, t0
   // restore x2 at last
   ld x2, 1*8(sp)
   addi sp, sp, 33*8
