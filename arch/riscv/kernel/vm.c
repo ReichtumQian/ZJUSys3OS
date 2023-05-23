@@ -217,12 +217,11 @@ struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
 }
 
 uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
+
 }
 
 uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
-  if(length <= 0){
-    return 0;
-  }
+  // 这里采用了遍历 vma 的方式而非以 PGSIZE 为单位遍历的方式，这样可以简化实现
 
   struct vm_area_struct *vma = mm->mmap;
   if(length <= vma->vm_start){

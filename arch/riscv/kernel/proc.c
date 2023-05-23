@@ -6,6 +6,9 @@
 #include "types.h"
 #include "vm.h"
 
+extern unsigned long uapp_start[];
+extern unsigned long uapp_end[];
+
 #define INT_MAX 2147483647
 #define UINT_MAX 4294967295
 
@@ -56,8 +59,18 @@ void task_init() {
     task[i]->thread.sscratch = USER_END;
     // 初始化 page table 与设置 pgd
     uint64* user_stack = (uint64*) kalloc();
-    uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
-    task[i]->pgd =  (uint64*)user_pgd;
+    // ------------------- lab 4 begin ------------------------
+    // uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
+    // task[i]->pgd =  (uint64*)user_pgd;
+    // ------------------- lab 4 end --------------------------
+    // ------------------- lab 5 begin ------------------------
+    uint64 pgtbl = kalloc();
+    task[i]->pgd = (uint64*)(pgtbl - (uint64)PA2VA_OFFSET);
+    // user code segment
+    do_mmap(task[i]->mm, USER_START, uapp_end - uapp_start, VM_READ|VM_WRITE|VM_EXEC);
+    // user stack segment
+    do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
+    // ------------------- lab 5 end --------------------------
   }
   task[1] -> priority = 1;
   task[2] -> priority = 4;
