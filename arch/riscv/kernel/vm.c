@@ -13,6 +13,7 @@ extern unsigned long uapp_end[];
 #include "defs.h"
 #include "mm.h"
 #include "printk.h"
+#include "proc.h"
 #include "types.h"
 #include <stddef.h>
 #include <string.h>
@@ -199,4 +200,40 @@ uint64* setupUserPage(uint64* user_stack){
 
 
   return pgtbl;
+}
+
+struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
+  if(mm == NULL){
+    return NULL;
+  }
+  struct vm_area_struct *vma = mm->mmap;
+  while(vma != NULL){
+    if(vma->vm_start <= addr && vma->vm_end > addr){
+      return vma;
+    }
+    vma = vma->vm_next;
+  }
+  return NULL;  // not found
+}
+
+uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
+}
+
+uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
+  if(length <= 0){
+    return 0;
+  }
+
+  struct vm_area_struct *vma = mm->mmap;
+  if(length <= vma->vm_start){
+    return 0;
+  }
+  while(vma->vm_next != NULL){
+    uint64 gap = vma->vm_next->vm_start - vma->vm_end;
+    if(gap >= length){
+      return vma->vm_end;
+    }
+    vma = vma->vm_next;
+  }
+  return vma->vm_end;
 }
