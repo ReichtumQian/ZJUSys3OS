@@ -1,5 +1,8 @@
 
+#pragma once
+
 #include "defs.h"
+#include "proc.h"
 
 void setup_vm(void);
 

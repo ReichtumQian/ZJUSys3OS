@@ -218,6 +218,19 @@ struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
 
 uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
 
+  struct vm_area_struct *vma = mm->mmap;
+  struct vm_area_struct *node = (struct vm_area_struct *)kalloc();
+  node->vm_mm = mm;
+  node->vm_flags = prot;
+  node->vm_start = addr;
+  node->vm_end = addr + length;
+  node->vm_next = NULL;
+  while(vma->vm_next != NULL){
+    vma = vma->vm_next;
+  }
+  vma->vm_next = node;
+  node->vm_prev = vma;
+  return addr;
 }
 
 uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){

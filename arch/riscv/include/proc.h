@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include "types.h"
 
 #define NR_TASKS (1 + 3) // 用于控制 最大线程数量 （idle 线程 + 3 内核线程）

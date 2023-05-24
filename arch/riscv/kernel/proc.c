@@ -58,8 +58,8 @@ void task_init() {
     // 设置 sscratch 为 USER_END
     task[i]->thread.sscratch = USER_END;
     // 初始化 page table 与设置 pgd
-    uint64* user_stack = (uint64*) kalloc();
     // ------------------- lab 4 begin ------------------------
+    // uint64* user_stack = (uint64*) kalloc();
     // uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
     // task[i]->pgd =  (uint64*)user_pgd;
     // ------------------- lab 4 end --------------------------
