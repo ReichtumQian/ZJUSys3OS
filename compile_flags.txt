@@ -1,4 +1,4 @@
--xc++
+-xc
 -I./include/
 -Wall
 -I./arch/riscv/include/

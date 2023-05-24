@@ -1,5 +1,6 @@
 // trap.c
 #include "clock.h"
+#include "defs.h"
 #include "printk.h"
 #include "proc.h"
 #include "syscall.h"
@@ -39,4 +40,21 @@ void trap_handler(unsigned long scause, unsigned long sepc,
   }
 
   return;
+}
+
+void do_page_fault(struct pt_regs *regs) {
+    /*
+    1. 通过 stval 获得访问出错的虚拟内存地址（Bad Address）
+    2. 通过 scause 获得当前的 Page Fault 类型
+    3. 通过 find_vm() 找到对应的 vm_area_struct
+    4. 通过 vm_area_struct 的 vm_flags 对当前的 Page Fault 类型进行检查
+        4.1 Instruction Page Fault      -> VM_EXEC
+        4.2 Load Page Fault             -> VM_READ
+        4.3 Store Page Fault            -> VM_WRITE
+    5. 最后调用 create_mapping 对页表进行映射
+    */
+
+    // 读取 stval
+    uint64 stval = csr_read(stval);
+    uint64 scause = csr_read(scause);
 }
