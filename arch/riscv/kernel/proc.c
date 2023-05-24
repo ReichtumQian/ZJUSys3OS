@@ -57,19 +57,23 @@ void task_init() {
     task[i]->thread.sstatus = (1 << 18) | (1 << 5);
     // 设置 sscratch 为 USER_END
     task[i]->thread.sscratch = USER_END;
-    // 初始化 page table 与设置 pgd
     // ------------------- lab 4 begin ------------------------
-    // uint64* user_stack = (uint64*) kalloc();
-    // uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
-    // task[i]->pgd =  (uint64*)user_pgd;
+    // 初始化 user_stack, page table
+    uint64* user_stack = (uint64*) kalloc();
+    uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
+    task[i]->pgd =  (uint64*)user_pgd;
     // ------------------- lab 4 end --------------------------
     // ------------------- lab 5 begin ------------------------
-    uint64 pgtbl = kalloc();
-    task[i]->pgd = (uint64*)(pgtbl - (uint64)PA2VA_OFFSET);
+    // 初始化 mm_struct
+    // uint64 pgtbl = kalloc();
+    // task[i]->pgd = (uint64*)(pgtbl - (uint64)PA2VA_OFFSET);
+    uint64 mm = kalloc();
+    task[i]->mm = (struct mm_struct*)(mm);
+    task[i]->mm->mmap=NULL;
     // user code segment
-    do_mmap(task[i]->mm, USER_START, uapp_end - uapp_start, VM_READ|VM_WRITE|VM_EXEC);
+    // do_mmap(task[i]->mm, USER_START, uapp_end - uapp_start, VM_READ|VM_WRITE|VM_EXEC);
     // user stack segment
-    do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
+    // do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
     // ------------------- lab 5 end --------------------------
   }
   task[1] -> priority = 1;

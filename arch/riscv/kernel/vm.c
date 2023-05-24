@@ -13,7 +13,6 @@ extern unsigned long uapp_end[];
 #include "defs.h"
 #include "mm.h"
 #include "printk.h"
-#include "proc.h"
 #include "types.h"
 #include <stddef.h>
 #include <string.h>
@@ -202,50 +201,51 @@ uint64* setupUserPage(uint64* user_stack){
   return pgtbl;
 }
 
-struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
-  if(mm == NULL){
-    return NULL;
-  }
-  struct vm_area_struct *vma = mm->mmap;
-  while(vma != NULL){
-    if(vma->vm_start <= addr && vma->vm_end > addr){
-      return vma;
-    }
-    vma = vma->vm_next;
-  }
-  return NULL;  // not found
-}
+// struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
+//   if(mm == NULL){
+//     return NULL;
+//   }
+//   struct vm_area_struct *vma = mm->mmap;
+//   while(vma != NULL){
+//     if(vma->vm_start <= addr && vma->vm_end > addr){
+//       return vma;
+//     }
+//     vma = vma->vm_next;
+//   }
+//   return NULL;  // not found
+// }
 
 uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
 
   struct vm_area_struct *vma = mm->mmap;
-  struct vm_area_struct *node = (struct vm_area_struct *)kalloc();
-  node->vm_mm = mm;
-  node->vm_flags = prot;
-  node->vm_start = addr;
-  node->vm_end = addr + length;
-  node->vm_next = NULL;
-  while(vma->vm_next != NULL){
-    vma = vma->vm_next;
-  }
-  vma->vm_next = node;
-  node->vm_prev = vma;
-  return addr;
+  uint64 alloc = kalloc();
+  struct vm_area_struct *node = (struct vm_area_struct *)alloc;
+  // node->vm_mm = mm;
+  // node->vm_flags = prot;
+  // node->vm_start = addr;
+  // node->vm_end = addr + length;
+  // node->vm_next = NULL;
+  // while(vma->vm_next != NULL){
+  //   vma = vma->vm_next;
+  // }
+  // vma->vm_next = node;
+  // node->vm_prev = vma;
+  // return addr;
 }
 
-uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
-  // 这里采用了遍历 vma 的方式而非以 PGSIZE 为单位遍历的方式，这样可以简化实现
+// uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
+//   // 这里采用了遍历 vma 的方式而非以 PGSIZE 为单位遍历的方式，这样可以简化实现
 
-  struct vm_area_struct *vma = mm->mmap;
-  if(length <= vma->vm_start){
-    return 0;
-  }
-  while(vma->vm_next != NULL){
-    uint64 gap = vma->vm_next->vm_start - vma->vm_end;
-    if(gap >= length){
-      return vma->vm_end;
-    }
-    vma = vma->vm_next;
-  }
-  return vma->vm_end;
-}
+//   struct vm_area_struct *vma = mm->mmap;
+//   if(length <= vma->vm_start){
+//     return 0;
+//   }
+//   while(vma->vm_next != NULL){
+//     uint64 gap = vma->vm_next->vm_start - vma->vm_end;
+//     if(gap >= length){
+//       return vma->vm_end;
+//     }
+//     vma = vma->vm_next;
+//   }
+//   return vma->vm_end;
+// }

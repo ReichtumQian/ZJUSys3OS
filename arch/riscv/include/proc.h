@@ -1,5 +1,7 @@
 
-#pragma once
+#ifndef _PROC_H
+#define _PROC_H
+
 
 #include "types.h"
 
@@ -80,3 +82,5 @@ void switch_to(struct task_struct *next);
 
 /* dummy funciton: 一个循环程序，循环输出自己的 pid 以及一个自增的局部变量*/
 void dummy();
+
+#endif /* _PROC_H */
