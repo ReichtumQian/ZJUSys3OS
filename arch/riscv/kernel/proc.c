@@ -5,6 +5,7 @@
 #include"defs.h"
 #include "types.h"
 #include "vm.h"
+#include "proc.h"
 
 extern unsigned long uapp_start[];
 extern unsigned long uapp_end[];
@@ -19,6 +20,7 @@ extern void __switch_to(struct task_struct *prev, struct task_struct *next);
 struct task_struct* idle;           // idle process
 struct task_struct* current;        // 指向当前运行线程的 `task_struct`
 struct task_struct* task[NR_TASKS]; // 线程数组，所有的线程都保存在此
+
 
 void task_init() {
   // 1. 调用 kalloc() 为 idle 分配一个物理页
@@ -59,21 +61,22 @@ void task_init() {
     task[i]->thread.sscratch = USER_END;
     // ------------------- lab 4 begin ------------------------
     // 初始化 user_stack, page table
-    uint64* user_stack = (uint64*) kalloc();
-    uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
-    task[i]->pgd =  (uint64*)user_pgd;
+    // uint64* user_stack = (uint64*) kalloc();
+    // uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
+    // task[i]->pgd =  (uint64*)user_pgd;
     // ------------------- lab 4 end --------------------------
     // ------------------- lab 5 begin ------------------------
+    // 初始化 user page table
+    uint64 pgtbl = kalloc();
+    task[i]->pgd = (uint64*)(pgtbl - (uint64)PA2VA_OFFSET);
     // 初始化 mm_struct
-    // uint64 pgtbl = kalloc();
-    // task[i]->pgd = (uint64*)(pgtbl - (uint64)PA2VA_OFFSET);
     uint64 mm = kalloc();
     task[i]->mm = (struct mm_struct*)(mm);
     task[i]->mm->mmap=NULL;
     // user code segment
-    // do_mmap(task[i]->mm, USER_START, uapp_end - uapp_start, VM_READ|VM_WRITE|VM_EXEC);
+    do_mmap(task[i]->mm, USER_START, (uint64)uapp_end - (uint64)uapp_start, VM_READ|VM_WRITE|VM_EXEC);
     // user stack segment
-    // do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
+    do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
     // ------------------- lab 5 end --------------------------
   }
   task[1] -> priority = 1;
