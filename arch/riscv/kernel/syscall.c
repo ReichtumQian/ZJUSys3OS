@@ -70,8 +70,8 @@ uint64 do_fork(struct pt_regs *regs) {
 
   // 6. 正确设置子进程的 trapframe 成员变量。将父进程的上下文环境（即传入的 regs）保存到子进程的 trapframe 中
   task[i]->trapframe = (struct pt_regs*)kalloc();
-  for(uint64 i = 0; i < 31; ++i){
-    task[i]->trapframe->x[i] = regs->x[i];
+  for(uint64 j = 0; j < 31; ++j){
+    task[i]->trapframe->x[j] = regs->x[j];
   }  
   task[i]->trapframe->sepc = regs->sepc;
   task[i]->trapframe->sstatus = regs->sstatus;
