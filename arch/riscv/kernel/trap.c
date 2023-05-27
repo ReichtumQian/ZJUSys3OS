@@ -2,11 +2,13 @@
 #include "trap.h"
 #include "clock.h"
 #include "defs.h"
+#include "mm.h"
 #include "printk.h"
 #include "proc.h"
 #include "syscall.h"
 #include "types.h"
 #include "vm.h"
+
 
 void trap_handler(unsigned long scause, unsigned long sepc,
                   struct pt_regs *regs) {
@@ -22,7 +24,7 @@ void trap_handler(unsigned long scause, unsigned long sepc,
       clock_set_next_event();
       do_timer();
     }
-  } 
+  }
   // ------------------------ system call ------------------------
   else if (scause == 8) { // system call
     // 由于 regs 中没有存 x0，所以获取 x17 其实读取的是 x[17 - 1]
@@ -46,9 +48,17 @@ void trap_handler(unsigned long scause, unsigned long sepc,
   return;
 }
 
-extern struct task_struct* current;
+extern struct task_struct *current;
+extern uint64 uapp_start[];
+extern uint64 uapp_end[];
 
 void do_page_fault(struct pt_regs *regs) {
+  const uint64 PTE_V = 1UL << 0;
+  const uint64 PTE_R = 1UL << 1;
+  const uint64 PTE_W = 1UL << 2;
+  const uint64 PTE_X = 1UL << 3;
+  const uint64 PTE_U = 1UL << 4;
+
   // 1. 通过 stval 获得访问出错的虚拟内存地址（Bad Address）
   uint64 stval = csr_read(stval);
   // 2. 通过 scause 获得当前的 Page Fault 类型
@@ -56,5 +66,38 @@ void do_page_fault(struct pt_regs *regs) {
   // 3. 通过 find_vm() 找到对应的 vm_area_struct
   struct vm_area_struct *vma = find_vma(current->mm, stval);
   // 4. 通过 vm_area_struct 的 vm_flags 对当前的 Page Fault 类型进行检查
+  uint64 pte_prot = (vma->vm_flags << 1); // 页表项权限
+  switch (scause) {
+  case 12: // instruction page fault
+    vma->vm_flags |= VM_EXEC;
+    pte_prot = PTE_U | PTE_R | PTE_V;
+    break;
+  case 13: // load page fault
+    vma->vm_flags |= VM_READ;
+    pte_prot = PTE_U | PTE_R | PTE_W | PTE_V;
+    break;
+  case 15: // instruction page fault
+    vma->vm_flags |= VM_WRITE;
+    pte_prot = PTE_U | PTE_R | PTE_W | PTE_X | PTE_V;
+    break;
+  default:
+    break;
+  }
   // 5. 最后调用 create_mapping 对页表进行映射
+  uint64 *pgtbl = (uint64 *)((uint64)current->pgd + (uint64)PA2VA_OFFSET);
+  //   5.1 若 Bad Address 在用户态代码段的地址范围内，则将其映射至 uapp_start
+  //   所在的物理地址
+  uint64 userCodeLength = (uint64)uapp_end - (uint64)uapp_start;
+  if (stval >= USER_START && stval < USER_START + userCodeLength) {
+    create_mapping(pgtbl, vma->vm_start,
+                   (uint64)uapp_start - (uint64)PA2VA_OFFSET,
+                   (uint64)uapp_end - (uint64)uapp_start, pte_prot);
+  }
+  //   5.2 若是其他情况，则用 kalloc 新建一块内存区域，并将 Bad Address
+  //   所属的页面映射到该内存区域
+  else {
+    uint64 page = kalloc();
+    create_mapping(pgtbl, vma->vm_start, (uint64)page - (uint64)PA2VA_OFFSET,
+                   PGSIZE, pte_prot);
+  }
 }
