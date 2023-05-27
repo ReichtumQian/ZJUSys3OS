@@ -65,19 +65,19 @@ void do_page_fault(struct pt_regs *regs) {
   // 3. 通过 find_vm() 找到对应的 vm_area_struct
   struct vm_area_struct *vma = find_vma(current->mm, stval);
   // 4. 通过 vm_area_struct 的 vm_flags 对当前的 Page Fault 类型进行检查
-  uint64 pte_prot = (vma->vm_flags << 1); // 页表项权限
+  uint64 pte_prot = 0; // 页表项权限
   switch (scause) {
   case 12: // instruction page fault
     vma->vm_flags |= VM_EXEC;
-    pte_prot = PTE_U | PTE_R | PTE_V;
+    pte_prot = PTE_U | PTE_R | PTE_X  | PTE_V;
     break;
   case 13: // load page fault
     vma->vm_flags |= VM_READ;
-    pte_prot = PTE_U | PTE_R | PTE_W | PTE_V;
+    pte_prot = PTE_U | PTE_R | PTE_V;
     break;
-  case 15: // instruction page fault
+  case 15: // write page fault
     vma->vm_flags |= VM_WRITE;
-    pte_prot = PTE_U | PTE_R | PTE_W | PTE_X | PTE_V;
+    pte_prot = PTE_U | PTE_R | PTE_W | PTE_V;
     break;
   default:
     break;
