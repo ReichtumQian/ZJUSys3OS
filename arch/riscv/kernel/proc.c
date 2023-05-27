@@ -20,6 +20,7 @@ extern void __switch_to(struct task_struct *prev, struct task_struct *next);
 struct task_struct* idle;           // idle process
 struct task_struct* current;        // 指向当前运行线程的 `task_struct`
 struct task_struct* task[NR_TASKS]; // 线程数组，所有的线程都保存在此
+uint64 num_tasks = 1;                // 当前线程数
 
 
 void task_init() {
@@ -48,7 +49,7 @@ void task_init() {
     task[i] = (struct task_struct *)task_page;
     task[i]->state = TASK_RUNNING;
     task[i]->counter = 0;
-    // task[i]->priority = rand();
+    task[i]->priority = rand();
     task[i]->pid = i;
     // 设置 ra 和 sp
     task[i]->thread.ra = (uint64)__dummy;
@@ -73,9 +74,9 @@ void task_init() {
     // user stack segment
     do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
   }
-  task[1] -> priority = 1;
-  task[2] -> priority = 4;
-  task[3] -> priority = 5;
+  // task[1] -> priority = 1;
+  // task[2] -> priority = 4;
+  // task[3] -> priority = 5;
 
   printk("...proc_init done!\n");
   return;
