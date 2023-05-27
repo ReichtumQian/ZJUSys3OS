@@ -69,7 +69,7 @@ void do_page_fault(struct pt_regs *regs) {
   switch (scause) {
   case 12: // instruction page fault
     vma->vm_flags |= VM_EXEC;
-    pte_prot = PTE_U | PTE_R | PTE_X  | PTE_V;
+    pte_prot = PTE_U | PTE_R | PTE_X | PTE_V;
     break;
   case 13: // load page fault
     vma->vm_flags |= VM_READ;
@@ -92,7 +92,12 @@ void do_page_fault(struct pt_regs *regs) {
                    (uint64)uapp_start - (uint64)PA2VA_OFFSET,
                    (uint64)uapp_end - (uint64)uapp_start, pte_prot);
   }
-  //   5.2 若是其他情况，则用 kalloc 新建一块内存区域，并将 Bad Address
+  //   5.2 若是 user stack，则直接分配映射
+  else if (vma->vm_start == USER_END - PGSIZE) {
+    create_mapping(pgtbl, vma->vm_start, current->thread_info->user_sp - PGSIZE,
+                   PGSIZE, pte_prot);
+  }
+  //   5.3 若是其他情况，则用 kalloc 新建一块内存区域，并将 Bad Address
   //   所属的页面映射到该内存区域
   else {
     uint64 page = kalloc();
