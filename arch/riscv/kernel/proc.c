@@ -59,16 +59,11 @@ void task_init() {
     task[i]->thread.sstatus = (1 << 18) | (1 << 5);
     // 设置 sscratch 为 USER_END
     task[i]->thread.sscratch = USER_END;
-    // ------------------- lab 4 begin ------------------------
+    // ------------------- lab4 and lab5 ------------------------
     // 初始化 user_stack, page table
-    // uint64* user_stack = (uint64*) kalloc();
-    // uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
-    // task[i]->pgd =  (uint64*)user_pgd;
-    // ------------------- lab 4 end --------------------------
-    // ------------------- lab 5 begin ------------------------
-    // 初始化 user page table
-    uint64 pgtbl = kalloc();
-    task[i]->pgd = (uint64*)(pgtbl - (uint64)PA2VA_OFFSET);
+    uint64* user_stack = (uint64*) kalloc();
+    uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
+    task[i]->pgd =  (uint64*)user_pgd;
     // 初始化 mm_struct
     uint64 mm = kalloc();
     task[i]->mm = (struct mm_struct*)(mm);
@@ -77,7 +72,6 @@ void task_init() {
     do_mmap(task[i]->mm, USER_START, (uint64)uapp_end - (uint64)uapp_start, VM_READ|VM_WRITE|VM_EXEC);
     // user stack segment
     do_mmap(task[i]->mm, USER_END - PGSIZE, PGSIZE, VM_READ|VM_WRITE);
-    // ------------------- lab 5 end --------------------------
   }
   task[1] -> priority = 1;
   task[2] -> priority = 4;

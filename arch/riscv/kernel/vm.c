@@ -183,11 +183,11 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
 
 uint64* setupUserPage(uint64* user_stack){
   // definition
-  const uint64 PTE_V = 1UL << 0;
-  const uint64 PTE_R = 1UL << 1;
-  const uint64 PTE_W = 1UL << 2;
-  const uint64 PTE_X = 1UL << 3;
-  const uint64 PTE_U = 1UL << 4;
+  // const uint64 PTE_V = 1UL << 0;
+  // const uint64 PTE_R = 1UL << 1;
+  // const uint64 PTE_W = 1UL << 2;
+  // const uint64 PTE_X = 1UL << 3;
+  // const uint64 PTE_U = 1UL << 4;
   // create user page table
   uint64* pgtbl = (uint64*)kalloc();
 
@@ -195,10 +195,11 @@ uint64* setupUserPage(uint64* user_stack){
   for(uint64 i = 0; i < 512; ++i){
     pgtbl[i] = swapper_pg_dir[i];
   }
+  // -------------- 在 lab5 中注释对 U-MODE code, User stack 的映射 --------------
   // 设置 uapp 的页表，U, X, R, V = 1
-  create_mapping(pgtbl, USER_START, (uint64)uapp_start - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_X | PTE_U| PTE_W);
+  // create_mapping(pgtbl, USER_START, (uint64)uapp_start - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_X | PTE_U| PTE_W);
   // 设置用户栈的页表，U, R, V = 1
-  create_mapping(pgtbl, USER_END - PGSIZE, (uint64)user_stack - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_U| PTE_W);
+  // create_mapping(pgtbl, USER_END - PGSIZE, (uint64)user_stack - PA2VA_OFFSET, PGSIZE, PTE_V | PTE_R | PTE_U| PTE_W);
 
 
   return pgtbl;

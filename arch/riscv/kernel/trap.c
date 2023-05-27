@@ -62,8 +62,6 @@ void do_page_fault(struct pt_regs *regs) {
   uint64 stval = csr_read(stval);
   // 2. 通过 scause 获得当前的 Page Fault 类型
   uint64 scause = csr_read(scause);
-  printk("[S] PAGE_FAULT: scause: %d, sepc: %lx, bad address: %lx\n", scause,
-         regs->sepc, stval);
   // 3. 通过 find_vm() 找到对应的 vm_area_struct
   struct vm_area_struct *vma = find_vma(current->mm, stval);
   // 4. 通过 vm_area_struct 的 vm_flags 对当前的 Page Fault 类型进行检查
