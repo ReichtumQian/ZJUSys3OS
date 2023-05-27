@@ -42,7 +42,7 @@ void task_init() {
   // 2. 其中每个线程的 state 为 TASK_RUNNING, counter 为 0, priority 使用 rand() 来设置, pid 为该线程在线程数组中的下标。
   // 3. 为 task[1] ~ task[NR_TASKS - 1] 设置 `thread_struct` 中的 `ra` 和 `sp`, 
   // 4. 其中 `ra` 设置为 __dummy （见 4.3.2）的地址， `sp` 设置为 该线程申请的物理页的高地址
-  for(int i = 1; i < NR_TASKS; ++i) {
+  for(int i = 1; i < 2; ++i) {
     // 设置 task、state、counter、priority、pid
     uint64 task_page = kalloc();
     task[i] = (struct task_struct *)task_page;

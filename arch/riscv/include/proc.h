@@ -45,10 +45,9 @@ struct task_struct {
   uint64 pid;      // 线程id
 
   struct thread_struct thread;
-
   pagetable_t pgd;
-
   struct mm_struct *mm;
+  struct pt_regs *trapframe;
 };
 
 struct vm_area_struct {
