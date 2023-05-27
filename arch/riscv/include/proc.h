@@ -23,7 +23,6 @@
 typedef unsigned long *pagetable_t;
 
 /* 用于记录 `线程` 的 `内核栈与用户栈指针` */
-/* (lab6中无需考虑，在这里引入是为了之后实验的使用) */
 struct thread_info {
   uint64 kernel_sp;
   uint64 user_sp;

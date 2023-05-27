@@ -1,7 +1,16 @@
   .section .text.entry
   .align 2
   .globl _traps 
+
 _traps:
+  csrr t0, sscratch
+  beq t0, zero, _trap_save_regs// if sscratch == 0, then it is a kernel trap
+  // else, it is a user trap, so we need to switch to kernel stack
+  mv t1, sp
+  mv sp, t0
+  csrw sscratch, t1
+
+_trap_save_regs:
   # -----------
   # save 31 registers, sepc, sstatus to stack
   addi sp, sp, -33*8
@@ -41,35 +50,18 @@ _traps:
   csrr t0, sstatus
   sd t0, 32*8(sp)
 
-  // a2 is the bottom of the stack, pass it to trap_handler
-  mv a2, sp
-
-  csrr t0, sscratch
-  beq t0, zero, _call_trap_handler  // if sscratch == 0, then it is a kernel trap
-  // else, it is a user trap, so we need to switch to kernel stack
-  mv t1, sp
-  mv sp, t0
-  csrw sscratch, t1
-
 _call_trap_handler:
   # call trap_handler
   csrr a0, scause
   csrr a1, sepc
+  mv a2, sp // a2 is the bottom of the stack, pass it to trap_handler
   call trap_handler
 
   # do_timer
   # call do_timer
 
-  // judge whether it is a user trap or kernel trap
-  csrr t0, sscratch
-  beq t0, zero, _trap_return  // if sscratch == 0, then it is a kernel trap
-  // else, it is a user trap, so we need to switch to user stack
-  mv t1, sp
-  mv sp, t0
-  csrw sscratch, t1
 
 
-_trap_return:
 
   // sepc and sstatus should be restored first, otherwise t0 will be overwritten
   ld t0, 31*8(sp)
@@ -113,7 +105,15 @@ _trap_return:
   ld x2, 1*8(sp)
   addi sp, sp, 33*8
 
+  // judge whether it is a user trap or kernel trap
+  csrr t0, sscratch
+  beq t0, zero, _trap_return  // if sscratch == 0, then it is a kernel trap
+  // else, it is a user trap, so we need to switch to user stack
+  mv t1, sp
+  mv sp, t0
+  csrw sscratch, t1
 
+_trap_return:
   # 4. return from trap
   sret
 
