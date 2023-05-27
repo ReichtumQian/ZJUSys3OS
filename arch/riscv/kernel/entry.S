@@ -196,3 +196,48 @@ __switch_to:
 
   jalr x0, ra, 0
   # ret
+
+.global ret_from_fork
+ret_from_fork:
+
+  # restore sepc and sstatus
+  ld t0, 31*8(a0)
+  csrw sepc, t0
+  ld t0, 32*8(a0)
+  csrw sstatus, t0
+
+  ld x1, 0*8(a0)
+  ld x2, 1*8(a0)
+  ld x3, 2*8(a0)
+  ld x4, 3*8(a0)
+  ld x5, 4*8(a0)
+  ld x6, 5*8(a0)
+  ld x7, 6*8(a0)
+  ld x8, 7*8(a0)
+  ld x9, 8*8(a0)
+  # ld x10, 9*8(a0)
+  ld x11, 10*8(a0)
+  ld x12, 11*8(a0)
+  ld x13, 12*8(a0)
+  ld x14, 13*8(a0)
+  ld x15, 14*8(a0)
+  ld x16, 15*8(a0)
+  ld x17, 16*8(a0)
+  ld x18, 17*8(a0)
+  ld x19, 18*8(a0)
+  ld x20, 19*8(a0)
+  ld x21, 20*8(a0)
+  ld x22, 21*8(a0)
+  ld x23, 22*8(a0)
+  ld x24, 23*8(a0)
+  ld x25, 24*8(a0)
+  ld x26, 25*8(a0)
+  ld x27, 26*8(a0)
+  ld x28, 27*8(a0)
+  ld x29, 28*8(a0)
+  ld x30, 29*8(a0)
+  ld x31, 30*8(a0)
+  # restore x10 at last
+  ld x10, 9*8(a0)
+
+  sret
