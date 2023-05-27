@@ -275,88 +275,88 @@ struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
     else return NULL;
 }
 
-// /*
-//  * @mm     : current thread's mm_struct
-//  * @addr   : the suggested va to map
-//  * @length : memory size to map
-//  * @prot   : protection
-//  *
-//  * @return : start va
-// */
-// uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
-//     printk("Do_mmap: start addr:%lx  length:%lx\n",addr, length);
+/*
+ * @mm     : current thread's mm_struct
+ * @addr   : the suggested va to map
+ * @length : memory size to map
+ * @prot   : protection
+ *
+ * @return : start va
+*/
+uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
+    printk("Do_mmap: start addr:%lx  length:%lx\n",addr, length);
         
-//     struct vm_area_struct *newnode = (struct vm_area_struct *)kalloc();
-//     newnode->vm_prev = NULL;
-//     newnode->vm_next = NULL;
-//     newnode->vm_flags = prot;
-//     newnode->vm_mm = mm;
-//     struct vm_area_struct *temp = mm->mmap;
-//     int flag = 0;
-//     if(temp == NULL){
-//         mm->mmap = newnode;
-//         newnode->vm_start = addr;
-//         newnode->vm_end = addr + length;
-//         //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
-//         return addr;
-//     }
-//     if(temp->vm_start > addr){//添加在链表最前面
-//         if(temp->vm_start <= addr + length){//页表前面没有空间，那就得放后面
-//             addr = get_unmapped_area(mm,length);
-//             flag = 1;
-//         }
-//         else{//页表前面有空间
-//             temp->vm_prev = newnode;
-//             newnode->vm_next = temp;
-//             mm->mmap = newnode;
+    struct vm_area_struct *newnode = (struct vm_area_struct *)kalloc();
+    newnode->vm_prev = NULL;
+    newnode->vm_next = NULL;
+    newnode->vm_flags = prot;
+    newnode->vm_mm = mm;
+    struct vm_area_struct *temp = mm->mmap;
+    int flag = 0;
+    if(temp == NULL){
+        mm->mmap = newnode;
+        newnode->vm_start = addr;
+        newnode->vm_end = addr + length;
+        //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
+        return addr;
+    }
+    if(temp->vm_start > addr){//添加在链表最前面
+        if(temp->vm_start <= addr + length){//页表前面没有空间，那就得放后面
+            addr = get_unmapped_area(mm,length);
+            flag = 1;
+        }
+        else{//页表前面有空间
+            temp->vm_prev = newnode;
+            newnode->vm_next = temp;
+            mm->mmap = newnode;
 
-//             newnode->vm_start = addr;
-//             newnode->vm_end = addr + length;
-//             //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
-//             return addr;
-//         }
-//     }
-//     while(temp->vm_next){           //addr必然在当前块start后面，再分end前、后讨论
-//         if(addr < temp->vm_end){   //如果addr在当前vma-end的前面，那必然冲突了
-//             if(!flag) addr = get_unmapped_area(mm, length);
-//             break;
-//         }
-//         if(addr >= temp->vm_end && addr < temp->vm_next->vm_start){ //如果addr在当前vma和下一个vma之间空挡
-//             if(temp->vm_next->vm_start < addr + length) //如果本次length会覆盖到下一个vma
-//                 if(!flag) addr = get_unmapped_area(mm, length);
-//             break;//本次length不会覆盖下一个vma
+            newnode->vm_start = addr;
+            newnode->vm_end = addr + length;
+            //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
+            return addr;
+        }
+    }
+    while(temp->vm_next){           //addr必然在当前块start后面，再分end前、后讨论
+        if(addr < temp->vm_end){   //如果addr在当前vma-end的前面，那必然冲突了
+            if(!flag) addr = get_unmapped_area(mm, length);
+            break;
+        }
+        if(addr >= temp->vm_end && addr < temp->vm_next->vm_start){ //如果addr在当前vma和下一个vma之间空挡
+            if(temp->vm_next->vm_start < addr + length) //如果本次length会覆盖到下一个vma
+                if(!flag) addr = get_unmapped_area(mm, length);
+            break;//本次length不会覆盖下一个vma
 
-//         }
-//         temp=temp->vm_next;
-//     }
-//     //写着写着发现这里不需要映射，等到pagefault的时候才映射
-//     //create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
-//     //create_mapping(current->pgd, addr, phy_addr, length, prot);
+        }
+        temp=temp->vm_next;
+    }
+    //写着写着发现这里不需要映射，等到pagefault的时候才映射
+    //create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
+    //create_mapping(current->pgd, addr, phy_addr, length, prot);
     
-//     newnode->vm_start = addr;
-//     newnode->vm_end = addr + length;
-//     if(temp->vm_next) temp->vm_next->vm_prev = newnode;
-//     newnode->vm_next = temp->vm_next;
-//     newnode->vm_prev = temp;
-//     temp->vm_next = newnode;
-//     //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
-//     return addr;
-// }
+    newnode->vm_start = addr;
+    newnode->vm_end = addr + length;
+    if(temp->vm_next) temp->vm_next->vm_prev = newnode;
+    newnode->vm_next = temp->vm_next;
+    newnode->vm_prev = temp;
+    temp->vm_next = newnode;
+    //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
+    return addr;
+}
 
 uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
     uint64 *i, *j;
     //遍历vma链表寻找之中空的那个
     printk("get unmapped area length %x\n",length);
     struct  vm_area_struct *temp = mm->mmap;
-    // printk("mmap %lx - %lx\n",temp->vm_start, temp->vm_end);
-    // uint64 addr=0;
-    // if(length <= temp->vm_start) return addr;
-    // while(temp->vm_next){
-    //     //printk("mmap %lx - %lx\n",temp->vm_start, temp->vm_end);
-    //     if(temp->vm_next->vm_start - temp->vm_end >= length){
-    //         return temp->vm_end;
-    //     }
-    //     temp = temp->vm_next;
-    // }
-    // return temp->vm_end;
+    printk("mmap %lx - %lx\n",temp->vm_start, temp->vm_end);
+    uint64 addr=0;
+    if(length <= temp->vm_start) return addr;
+    while(temp->vm_next){
+        //printk("mmap %lx - %lx\n",temp->vm_start, temp->vm_end);
+        if(temp->vm_next->vm_start - temp->vm_end >= length){
+            return temp->vm_end;
+        }
+        temp = temp->vm_next;
+    }
+    return temp->vm_end;
 }
