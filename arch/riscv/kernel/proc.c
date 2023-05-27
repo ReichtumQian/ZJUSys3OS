@@ -49,7 +49,8 @@ void task_init() {
     task[i] = (struct task_struct *)task_page;
     task[i]->state = TASK_RUNNING;
     task[i]->counter = 0;
-    task[i]->priority = rand();
+    // task[i]->priority = rand();
+    task[i] -> priority = 1;
     task[i]->pid = i;
     // 设置 ra 和 sp
     task[i]->thread.ra = (uint64)__dummy;
@@ -141,8 +142,8 @@ void schedule(){
   while (1) {
 		c = UINT_MAX;
 		next = 0;
-		i = NR_TASKS;
-		p = &task[NR_TASKS];
+		i = num_tasks + 1;
+		p = &task[num_tasks + 1];
 		while (--i) {
       --p;
       char one = (*p)->state == TASK_RUNNING;
@@ -154,10 +155,10 @@ void schedule(){
       }
 		}
 		if (c != UINT_MAX) break;
-		for(p = (&FIRST_TASK+1) ; p <= &LAST_TASK ; ++p){
+		for(p = (&FIRST_TASK+1) ; p <= &task[num_tasks] ; ++p){
+      (*p)->counter = (*p)->priority;
       printk("SET [PID = %d PRIORITY = %d COUNTER = %d]\n", (*p)->pid, (*p)->priority, (*p)-> counter);
 
-      (*p)->counter = (*p)->priority;
       // (*p)->counter = ((*p)->counter >> 1) + (*p)->priority;
     }
 		c = UINT_MAX;
