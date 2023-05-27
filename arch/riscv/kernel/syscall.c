@@ -33,11 +33,17 @@ uint64 do_fork(struct pt_regs *regs) {
   task[i] = (struct task_struct *)task_page;
   task[i]->state = TASK_RUNNING;
   task[i]->counter = 0;
-  task[i]->priority = rand();
+  // task[i]->priority = rand();
+  if(i == 2){
+    task[i]->priority = 4;
+  }else{
+    task[i]->priority = 5;
+  }
   task[i]->pid = i;
 
   // 2. 创建子进程的用户栈，将子进程用户栈的地址保存在 thread_info->user_sp 中，并将父进程用户栈的内容拷贝到子进程的用户栈中
   uint64* user_stack = (uint64*)kalloc();
+  task[i]->thread_info = (struct thread_info*) kalloc();
   task[i]->thread_info->user_sp = (uint64)user_stack + (uint64)PGSIZE; // 指向栈顶
   for(uint64 j = 0; j < 512; ++j) {
     user_stack[j] = ((uint64*)((uint64)USER_END - (uint64)PGSIZE))[j];
@@ -45,7 +51,10 @@ uint64 do_fork(struct pt_regs *regs) {
 
   // 3. 正确设置子进程的 thread 成员变量
   task[i]->thread.ra = (uint64)forkret;
+  task[i]->thread.sp = (uint64)task[i] + PGSIZE;
+  task[i]->thread.sepc = regs->sepc;
   task[i]->thread.sstatus = (1 << 18) | (1 << 5);
+  task[i]->thread.sscratch = (uint64)task[i] + PGSIZE;
 
   // 4. 正确设置子进程的 pgd 成员变量，为子进程分配根页表，并将内核根页表 swapper_pg_dir 的内容复制到子进程的根页表中，从而对于子进程来说只建立了内核的页表映射。
   uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;

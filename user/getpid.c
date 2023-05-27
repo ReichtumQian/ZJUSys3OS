@@ -33,10 +33,10 @@ static inline long fork()
 
 
 int main() {
-    // int pid;
+    int pid;
     printf("[U] Enter main\n");
-    // pid = fork();
-    // printf("[U] pid: %ld\n", pid);
+    pid = fork();
+    printf("[U] pid: %ld\n", pid);
 
     // if (pid == 0) {
     //     while (1) {

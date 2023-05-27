@@ -32,7 +32,7 @@ void trap_handler(unsigned long scause, unsigned long sepc,
     } else if (regs->x[17 - 1] == SYS_GETPID) {
       regs->x[10 - 1] = sys_getpid();
     } else if(regs->x[17 - 1] == SYS_CLONE){
-      regs->x[10-1] = clone(regs);
+      regs->x[10 - 1] = clone(regs);
     }
     regs->sepc += 4;
   }
