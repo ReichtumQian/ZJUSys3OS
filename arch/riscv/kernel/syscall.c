@@ -65,9 +65,11 @@ uint64 do_fork(struct pt_regs *regs) {
   struct vm_area_struct* vma = current->mm->mmap;
   while(vma != NULL) {
     do_mmap(task[i]->mm, vma->vm_start, vma->vm_end - vma->vm_start, vma->vm_flags);
+    vma = vma->vm_next;
   }
 
   // 6. 正确设置子进程的 trapframe 成员变量。将父进程的上下文环境（即传入的 regs）保存到子进程的 trapframe 中
+  task[i]->trapframe = (struct pt_regs*)kalloc();
   for(uint64 i = 0; i < 31; ++i){
     task[i]->trapframe->x[i] = regs->x[i];
   }  
