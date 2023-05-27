@@ -96,7 +96,7 @@ void do_page_fault(struct pt_regs *regs) {
   }
   //   5.2 若是 user stack，则直接分配映射
   else if (vma->vm_start == USER_END - PGSIZE) {
-    create_mapping(pgtbl, vma->vm_start, current->thread_info->user_sp - PGSIZE,
+    create_mapping(pgtbl, vma->vm_start, current->thread_info->user_sp - (uint64)PGSIZE - (uint64)PA2VA_OFFSET,
                    PGSIZE, pte_prot);
   }
   //   5.3 若是其他情况，则用 kalloc 新建一块内存区域，并将 Bad Address

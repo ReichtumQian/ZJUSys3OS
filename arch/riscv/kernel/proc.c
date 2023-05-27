@@ -64,6 +64,8 @@ void task_init() {
     // ------------------- lab4 and lab5 ------------------------
     // 初始化 user_stack, page table
     uint64* user_stack = (uint64*) kalloc();
+    task[i]->thread_info = (struct thread_info*)(kalloc());
+    task[i]->thread_info->user_sp = (uint64)user_stack + PGSIZE;
     uint64 user_pgd = (uint64)setupUserPage(user_stack) - (uint64)PA2VA_OFFSET;
     task[i]->pgd =  (uint64*)user_pgd;
     // 初始化 mm_struct
