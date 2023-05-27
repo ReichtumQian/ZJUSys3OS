@@ -2,6 +2,7 @@
 
 // extern unsigned long _stext is not correct!! so I change it to extern unsigned long _stext[]
 // extern unsigned long _stext;
+#include "proc.h"
 extern unsigned long _stext[];
 extern unsigned long _srodata[];
 extern unsigned long _sdata[];
@@ -205,159 +206,82 @@ uint64* setupUserPage(uint64* user_stack){
   return pgtbl;
 }
 
-// struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
-//   if(mm == NULL){
-//     return NULL;
-//   }
-//   struct vm_area_struct *vma = mm->mmap;
-//   while(vma != NULL){
-//     if(vma->vm_start <= addr && vma->vm_end > addr){
-//       return vma;
-//     }
-//     vma = vma->vm_next;
-//   }
-//   return NULL;  // not found
-// }
-
-// uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
-
-//   struct vm_area_struct *vma = mm->mmap;
-  // uint64 alloc = kalloc();
-  // struct vm_area_struct *node = (struct vm_area_struct *)alloc;
-  // node->vm_mm = mm;
-  // node->vm_flags = prot;
-  // node->vm_start = addr;
-  // node->vm_end = addr + length;
-  // node->vm_next = NULL;
-  // while(vma->vm_next != NULL){
-  //   vma = vma->vm_next;
-  // }
-  // vma->vm_next = node;
-  // node->vm_prev = vma;
-  // return addr;
-// }
-
-// uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
-//   // 这里采用了遍历 vma 的方式而非以 PGSIZE 为单位遍历的方式，这样可以简化实现
-
-//   struct vm_area_struct *vma = mm->mmap;
-//   if(length <= vma->vm_start){
-//     return 0;
-//   }
-//   while(vma->vm_next != NULL){
-//     uint64 gap = vma->vm_next->vm_start - vma->vm_end;
-//     if(gap >= length){
-//       return vma->vm_end;
-//     }
-//     vma = vma->vm_next;
-//   }
-//   return vma->vm_end;
-// }
-
-/*
-* @mm          : current thread's mm_struct
-* @address     : the va to look up
-*
-* @return      : the VMA if found or NULL if not found
-*/
 struct vm_area_struct *find_vma(struct mm_struct *mm, uint64 addr){
-    if(mm == NULL) return NULL;
-    struct vm_area_struct *temp = mm->mmap;
-    if(temp == NULL) return NULL;
-    while(temp->vm_next){
-        if(temp->vm_start <= addr && temp->vm_end > addr){
-            return temp;
-        }
-        temp = temp->vm_next;
+  if(mm == NULL){
+    return NULL;
+  }
+  struct vm_area_struct *vma = mm->mmap;
+  while(vma != NULL){
+    if(vma->vm_start <= addr && vma->vm_end > addr){
+      return vma;
     }
-    if(temp->vm_start <= addr && temp->vm_end > addr){
-            return temp;
-    }
-    else return NULL;
+    vma = vma->vm_next;
+  }
+  return NULL;  // not found
 }
 
-/*
- * @mm     : current thread's mm_struct
- * @addr   : the suggested va to map
- * @length : memory size to map
- * @prot   : protection
- *
- * @return : start va
-*/
 uint64 do_mmap(struct mm_struct *mm, uint64 addr, uint64 length, int prot){
-    printk("Do_mmap: start addr:%lx  length:%lx\n",addr, length);
-        
-    struct vm_area_struct *newnode = (struct vm_area_struct *)kalloc();
-    newnode->vm_prev = NULL;
-    newnode->vm_next = NULL;
-    newnode->vm_flags = prot;
-    newnode->vm_mm = mm;
-    struct vm_area_struct *temp = mm->mmap;
-    int flag = 0;
-    if(temp == NULL){
-        mm->mmap = newnode;
-        newnode->vm_start = addr;
-        newnode->vm_end = addr + length;
-        //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
-        return addr;
-    }
-    if(temp->vm_start > addr){//添加在链表最前面
-        if(temp->vm_start <= addr + length){//页表前面没有空间，那就得放后面
-            addr = get_unmapped_area(mm,length);
-            flag = 1;
-        }
-        else{//页表前面有空间
-            temp->vm_prev = newnode;
-            newnode->vm_next = temp;
-            mm->mmap = newnode;
-
-            newnode->vm_start = addr;
-            newnode->vm_end = addr + length;
-            //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
-            return addr;
-        }
-    }
-    while(temp->vm_next){           //addr必然在当前块start后面，再分end前、后讨论
-        if(addr < temp->vm_end){   //如果addr在当前vma-end的前面，那必然冲突了
-            if(!flag) addr = get_unmapped_area(mm, length);
-            break;
-        }
-        if(addr >= temp->vm_end && addr < temp->vm_next->vm_start){ //如果addr在当前vma和下一个vma之间空挡
-            if(temp->vm_next->vm_start < addr + length) //如果本次length会覆盖到下一个vma
-                if(!flag) addr = get_unmapped_area(mm, length);
-            break;//本次length不会覆盖下一个vma
-
-        }
-        temp=temp->vm_next;
-    }
-    //写着写着发现这里不需要映射，等到pagefault的时候才映射
-    //create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
-    //create_mapping(current->pgd, addr, phy_addr, length, prot);
-    
-    newnode->vm_start = addr;
-    newnode->vm_end = addr + length;
-    if(temp->vm_next) temp->vm_next->vm_prev = newnode;
-    newnode->vm_next = temp->vm_next;
-    newnode->vm_prev = temp;
-    temp->vm_next = newnode;
-    //printk("Do_mmap: start addr:%lx  end addr:%lx\n",newnode->vm_start, newnode->vm_end);
+  struct vm_area_struct* vma = mm->mmap;
+  struct vm_area_struct* new_vma = (struct vm_area_struct*)kalloc();
+  // if vma is empty
+  if(vma == NULL){
+    new_vma->vm_mm = mm;
+    new_vma->vm_start = addr;
+    new_vma->vm_end = addr + length;
+    new_vma->vm_prev = NULL;
+    new_vma->vm_next = NULL;
+    new_vma->vm_flags = prot;
+    mm->mmap = new_vma;
     return addr;
+  }
+  while(vma != NULL){
+    uint64 overlap1 = vma->vm_start <= addr && vma->vm_end >= addr;
+    uint64 overlap2 = vma->vm_start <= addr + length && vma->vm_end >= addr + length;
+    // if addr is in the middle of two vma
+    if(vma->vm_next != NULL && vma->vm_end <= addr && vma->vm_next->vm_start >= addr + length){
+      new_vma->vm_mm = mm;
+      new_vma->vm_start = addr;
+      new_vma->vm_end = addr + length;
+      new_vma->vm_prev = vma;
+      new_vma->vm_next = vma->vm_next;
+      new_vma->vm_flags = prot;
+      vma->vm_next->vm_prev = new_vma;
+      vma->vm_next = new_vma;
+      return addr;
+    }
+    // if is overlap
+    else if(overlap1 || overlap2){
+      addr = get_unmapped_area(mm, length);
+      return do_mmap(mm, addr, length, prot);
+    }
+    // if addr is in the end of one vma
+    else if(vma->vm_end <= addr && vma->vm_next == NULL){
+      new_vma->vm_mm = mm;
+      new_vma->vm_start = addr;
+      new_vma->vm_end = addr + length;
+      new_vma->vm_prev = vma;
+      new_vma->vm_next = NULL;
+      new_vma->vm_flags = prot;
+      vma->vm_next = new_vma;
+      return addr;
+    }
+    vma = vma->vm_next;
+  }
+  return addr;
 }
 
 uint64 get_unmapped_area(struct mm_struct *mm, uint64 length){
-    uint64 *i, *j;
-    //遍历vma链表寻找之中空的那个
-    printk("get unmapped area length %x\n",length);
-    struct  vm_area_struct *temp = mm->mmap;
-    printk("mmap %lx - %lx\n",temp->vm_start, temp->vm_end);
-    uint64 addr=0;
-    if(length <= temp->vm_start) return addr;
-    while(temp->vm_next){
-        //printk("mmap %lx - %lx\n",temp->vm_start, temp->vm_end);
-        if(temp->vm_next->vm_start - temp->vm_end >= length){
-            return temp->vm_end;
-        }
-        temp = temp->vm_next;
+  // 这里采用了遍历 vma 的方式而非以 PGSIZE 为单位遍历的方式，这样可以简化实现
+  struct vm_area_struct *vma = mm->mmap;
+  if(length <= vma->vm_start){
+    return 0;
+  }
+  while(vma->vm_next != NULL){
+    uint64 gap = vma->vm_next->vm_start - vma->vm_end;
+    if(gap >= length){
+      return vma->vm_end;
     }
-    return temp->vm_end;
+    vma = vma->vm_next;
+  }
+  return vma->vm_end;
 }
