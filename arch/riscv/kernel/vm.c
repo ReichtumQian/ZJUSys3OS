@@ -124,6 +124,9 @@ void create_mapping(uint64 *pgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
   创建多级页表的时候可以使用 kalloc() 来获取一页作为页表目录
   可以使用 V bit 来判断页表项是否存在
   */
+  #ifdef LAB5_DEBUG
+  printk("create_mapping: va = 0x%lx, pa = 0x%lx, size=0x%lx, perm=0x%x\n", va, pa, sz, perm);
+  #endif
   const uint64 PTE_V = 1UL << 0;
   const uint64 INT_MAX = 0x8000000000000000;
   uint64 vpn[3];
