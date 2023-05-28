@@ -202,6 +202,7 @@ ret_from_fork:
 
   # restore sepc and sstatus
   ld t0, 31*8(a0)
+  addi t0, t0, 4 // sepc = sepc + 4
   csrw sepc, t0
   ld t0, 32*8(a0)
   csrw sstatus, t0

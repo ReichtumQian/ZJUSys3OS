@@ -50,7 +50,7 @@ void task_init() {
     task[i]->state = TASK_RUNNING;
     task[i]->counter = 0;
     // task[i]->priority = rand();
-    task[i] -> priority = 1;
+    task[i] -> priority = 4;
     task[i]->pid = i;
     // 设置 ra 和 sp
     task[i]->thread.ra = (uint64)__dummy;

@@ -42,8 +42,8 @@ void trap_handler(unsigned long scause, unsigned long sepc,
   }
   // ------------------------ unhandled interrupt ------------------------
   else {
-    printk("Unhandled interrupt! scause: %d\n", scause);
-    printk("Unhandled interrupt! sepc: %d\n", sepc);
+    // printk("Unhandled interrupt! scause: %d\n", scause);
+    // printk("Unhandled interrupt! sepc: %d\n", sepc);
   }
 
   return;
@@ -64,6 +64,7 @@ void do_page_fault(struct pt_regs *regs) {
   uint64 stval = csr_read(stval);
   // 2. 通过 scause 获得当前的 Page Fault 类型
   uint64 scause = csr_read(scause);
+  printk("[S] PAGE_FAULT: scause: %d, sepc: 0x%lx, badaddr: 0x%lx\n", scause, csr_read(sepc), stval);
   // 3. 通过 find_vm() 找到对应的 vm_area_struct
   struct vm_area_struct *vma = find_vma(current->mm, stval);
   // 4. 通过 vm_area_struct 的 vm_flags 对当前的 Page Fault 类型进行检查
@@ -71,7 +72,7 @@ void do_page_fault(struct pt_regs *regs) {
   switch (scause) {
   case 12: // instruction page fault
     vma->vm_flags |= VM_EXEC;
-    pte_prot = PTE_U | PTE_R | PTE_X | PTE_V;
+    pte_prot = PTE_U | PTE_R | PTE_X | PTE_V | PTE_W;
     break;
   case 13: // load page fault
     vma->vm_flags |= VM_READ;
@@ -92,7 +93,7 @@ void do_page_fault(struct pt_regs *regs) {
   if (stval >= USER_START && stval < USER_START + userCodeLength) {
     create_mapping(pgtbl, vma->vm_start,
                    (uint64)uapp_start - (uint64)PA2VA_OFFSET,
-                   (uint64)uapp_end - (uint64)uapp_start, pte_prot);
+                   userCodeLength, pte_prot);
   }
   //   5.2 若是 user stack，则直接分配映射
   else if (vma->vm_start == USER_END - PGSIZE) {

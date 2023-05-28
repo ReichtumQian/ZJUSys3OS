@@ -32,37 +32,37 @@ static inline long fork()
 // }
 
 
-int main() {
-    int pid;
-    printf("[U] Enter main\n");
-    pid = fork();
-    printf("[U] pid: %ld\n", pid);
-
-    // if (pid == 0) {
-    //     while (1) {
-    //         printf("[U-CHILD] pid: %ld is running!\n", getpid());
-    //         for (unsigned int i = 0; i < 0x4FFFFFFF; i++);
-    //     } 
-    // } else {
-    //     while (1) {
-    //         printf("[U-PARENT] pid: %ld is running!\n", getpid());
-    //         for (unsigned int i = 0; i < 0x4FFFFFFF; i++);
-    //     } 
-    // }
-    return 0;
-}
-
 // int main() {
-//   int pid;
-//   pid = fork();
-//   if(pid > 0)
-//     printf("[PID = %d] fork [PID = %d]\n", getpid(), pid);
-//   pid = fork();
-//   if(pid > 0)
-//     printf("[PID = %d] fork [PID = %d]\n", getpid(), pid);
+//     int pid;
+//     printf("[U] Enter main\n");
+//     pid = fork();
+//     printf("[U] pid: %ld\n", pid);
 
-//   while(1) {
-//       printf("[PID = %d] is running!\n", getpid());
-//       for (unsigned int i = 0; i < 0x4FFFFFFF; i++);
-//   }
+//     if (pid == 0) {
+//         while (1) {
+//             printf("[U-CHILD] pid: %ld is running!\n", getpid());
+//             for (unsigned int i = 0; i < 0x4FFFFFFF; i++);
+//         } 
+//     } else {
+//         while (1) {
+//             printf("[U-PARENT] pid: %ld is running!\n", getpid());
+//             for (unsigned int i = 0; i < 0x4FFFFFFF; i++);
+//         } 
+//     }
+//     return 0;
 // }
+
+int main() {
+  int pid;
+  pid = fork();
+  if(pid > 0)
+    printf("[PID = %d] fork [PID = %d]\n", getpid(), pid);
+  pid = fork();
+  if(pid > 0)
+    printf("[PID = %d] fork [PID = %d]\n", getpid(), pid);
+
+  while(1) {
+      printf("[PID = %d] is running!\n", getpid());
+      for (unsigned int i = 0; i < 0x4FFFFFFF; i++);
+  }
+}
