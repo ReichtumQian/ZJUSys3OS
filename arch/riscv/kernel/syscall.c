@@ -77,7 +77,7 @@ uint64 do_fork(struct pt_regs *regs) {
   task[i]->trapframe->sstatus = regs->sstatus;
 
   task[i]->trapframe->x[10] = 0; // 子进程返回值为 0
-  task[i]->trapframe->x[2] = csr_read(sscratch); // sp 为父进程的 sscratch(用户态 sp)
+  task[i]->trapframe->x[1] = csr_read(sscratch); // sp 为父进程的 sscratch(用户态 sp)
 
   // 7. 返回子进程的 pid
   return i;
